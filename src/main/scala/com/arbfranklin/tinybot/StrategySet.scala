@@ -27,11 +27,8 @@ package com.arbfranklin.tinybot
 
 import strategies.Strategy
 import util._
+
 import collection.GenIterable
-import util.Explode
-import util.SetState
-import util.Spawn
-import util.Status
 
 class StrategySet private(val strategies: List[(Strategy,Double)]) {
   def add(tuple: (Strategy,Double)): StrategySet = new StrategySet((tuple._1, tuple._2) :: strategies)
@@ -43,10 +40,10 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
     val votes = collateVotes(ctx)
 
     // explosions are the first priority
-    val explosions = votes.filter(_.action.isInstanceOf[Explode])
+    val explosions = votes.filterOnly[Explode]
     if (explosions.nonEmpty) {
       // find the biggest requested explosion
-      val biggest = explosions.maxBy(_.action.asInstanceOf[Explode].size)
+      val biggest = explosions.maxBy(_.action.size)
       return List(biggest.action, Status(biggest.reason))
     }
 
@@ -55,24 +52,24 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
 
     // now spawning, but no matter what we need a move location
     val fm = findMove(votes)
-    val move = fm.action.asInstanceOf[Move]
+    val move = fm.action
     val reason = fm.reason
 
     // the move instructions
     val moveInstructions = if (move!=Move.Center) List(move, SetState("lastMove", move.toString)) else List()
 
     // spawn?
-    val spawns = votes.filter(_.action.isInstanceOf[Spawn])
+    val spawns = votes.filterOnly[Spawn]
     if (spawns.nonEmpty && fm.score.isPositive) {
       // find the biggest spawn
-      val biggest = spawns.maxBy(_.action.asInstanceOf[Spawn].energy)
+      val biggest = spawns.maxBy(_.action.energy)
 
-      val spawn = biggest.action.asInstanceOf[Spawn]
+      val spawn = biggest.action
       if (spawn.direction != Move.Center) {
         return List(spawn, Status(biggest.reason)) ::: moveInstructions ::: states
       } else {
         // where to spawn?
-        val moves = Move.values.filter(m => ctx.view.at(ctx.view.toXY(m))==Tile.Empty && m != move)
+        val moves = Move.values.filter(m => m != move && ctx.view.atMove(m)==Tile.Empty)
         if (moves.nonEmpty) {
           return List(Spawn(randFrom(moves), spawn.energy), Status(biggest.reason)) ::: moveInstructions ::: states
         }
@@ -85,40 +82,40 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
   }
 
   /**collate all the potential actions */
-  private def collateVotes(ctx: ReactContext): GenIterable[Vote] = {
+  private def collateVotes(ctx: ReactContext): GenIterable[Vote[Action]] = {
     // TODO: apply parallel collections? Slower on my mac, but maybe not on a high-end server?
-    val allowedMoves = Move.values.filter(m => ctx.view.at(ctx.view.toXY(m)) != Tile.Wall).toSet
+    val allowedMoves = Move.values.filter(m => ctx.view.atMove(m) != Tile.Wall).toSet
 
     // iterate all the move suggestions the strategies have made
-    strategies.flatMap { case (strategy, w) =>
+    strategies.flatMap { case (strategy, weight) =>
       // obtain the candidates and re-weight them
       val votes = strategy.eval(ctx, allowedMoves)
-      votes.map(v => Vote(v.action, v.score * w, v.reason))
+      votes.map(v => Vote(v.action, v.score * weight, v.reason))
     }
   }
 
   /**find the best move in the action set */
-  private def findMove(actions: GenIterable[Vote]): Vote = {
+  private def findMove(votes: GenIterable[Vote[Action]]): Vote[Move] = {
     // only interested in move actions at this point
-    val moves = actions.map(_.action).filter(_.isInstanceOf[Move]).toSet
+    val votesByMove = votes.filterOnly[Move].groupBy(_.action)
 
     // collaborate across the votes for each move square
-    val cscores = moves.map { move =>
-      val votes = actions.filter(_.action == move)
-      val score = Score.combine(votes.map(_.score))
-      val dominant = votes.maxBy { v =>
-        if (v.score == Score.Veto) Double.PositiveInfinity else v.score.d
-      } // veto is dominant
+    val aggregatedMoveVotes = votesByMove.collect {
+      case (move, moveVotes) =>
+        val score = Score.combine(moveVotes.map(_.score))
 
-      // new collaborated vote
-      Vote(move, score, dominant.reason)
+        // veto is dominant for reason
+        val reason = moveVotes.maxBy { v => if (v.score.isVeto) Double.PositiveInfinity else v.score.d }.reason
+
+        // new collaborated vote
+        Vote(move, score, reason)
     }
 
-    if (cscores.isEmpty) {
+    if (aggregatedMoveVotes.isEmpty) {
       Vote(Move.Center, Score.Abstain, "*stuck*")
     } else {
       // TODO: the max score is the move, but not necessarily the reason
-      cscores.maxBy(_.score)
+      aggregatedMoveVotes.maxBy(_.score)
     }
   }
 

@@ -30,7 +30,9 @@ import collection.GenIterable
 /**a score for an item ranging from -1 to 1 */
 case class Score(d: Double) extends Ordered[Score] {
   /** is this a positive score? */
-  def isPositive = d>=0d
+  val isPositive = d>=0d
+
+  val isVeto = d == Score.VetoScore
 
   /** reweight a value */
   def *(w: Double): Score = if (d <= -1d || d >= 1d) this else Score(w * d)
@@ -46,8 +48,9 @@ case class Score(d: Double) extends Ordered[Score] {
 }
 
 object Score {
+  final val VetoScore = -1
   /** special scores */
-  val Veto = new Score(-1)
+  val Veto = new Score(VetoScore)
   val Abstain = new Score(0)
   val Mandate = new Score(1)
 

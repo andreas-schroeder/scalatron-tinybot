@@ -33,5 +33,5 @@ trait Strategy {
   def name = getClass.getSimpleName
 
   /** evaluate against the given context and provide a serious of potential actions and their associated score */
-  def eval(ctx: ReactContext, moves: Set[Move]): Iterable[Vote] = Vote.Abstain
+  def eval(ctx: ReactContext, moves: Set[Move]): Iterable[Vote[Action]] = Vote.Abstain
 }

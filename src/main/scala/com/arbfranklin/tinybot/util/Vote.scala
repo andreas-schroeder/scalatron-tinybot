@@ -25,14 +25,24 @@
 
 package com.arbfranklin.tinybot.util
 
+import scala.collection.GenIterable
+import scala.reflect.ClassTag
+
 /**A vote for a particular action, and its associated score */
-case class Vote(action: Action, score: Score, reason: String) {
+case class Vote[+A <: Action](action: A, score: Score, reason: String) {
 }
 
 object Vote {
   import scala.language.implicitConversions
 
-  val Abstain = List[Vote]()
+  val Abstain = List[Vote[Nothing]]()
 
-  implicit def vote2list(v: Vote): List[Vote] = List(v)
+  implicit def vote2list[A <: Action](v: Vote[A]): List[Vote[A]] = List(v)
+
+  implicit class VoteListEnhanced(votes: GenIterable[Vote[Action]]) {
+    def filterOnly[A <: Action](implicit tag: ClassTag[A]): GenIterable[Vote[A]] = {
+      val desiredClass = tag.runtimeClass
+      votes.collect { case v @ Vote(a, _, _) if desiredClass.isAssignableFrom(a.getClass) => v.asInstanceOf[Vote[A]] }
+    }
+  }
 }

@@ -17,7 +17,10 @@ object TinyBotBuild extends Build {
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-optimise", "-explaintypes", "-feature"),
     (scalacOptions in Test) ++= Seq("-Yrangepos"),
 
-    libraryDependencies += "org.specs2" %% "specs2-core" % "3.8.4" % "test",
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.specs2" %% "specs2-core" % "3.8.4" % "test"
+    ),
 
     // default parameters for scalatron play goal
     scalatronDir := file("/Users/aschroeder/projects/scalatron/dist"),

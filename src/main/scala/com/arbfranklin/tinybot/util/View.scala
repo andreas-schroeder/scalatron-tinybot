@@ -43,6 +43,8 @@ class View(val cols: Int, val cells: Array[Tile]) {
     if (c < 0 || c >= cells.length) Occluded else cells(c)
   }
 
+  def atMove(m: Move): Tile = at(toXY(m))
+
   /** non-empty items around the given position */
   def around(pos: XY): List[Tile] = View.AroundMoves.map(m => at(pos + m))
 
