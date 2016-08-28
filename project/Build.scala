@@ -8,21 +8,19 @@ object TinyBotBuild extends Build {
     id = "tinybot",
     base = file("."),
     settings = Project.defaultSettings ++ botSettings)
-    
+
   def botSettings: Seq[Setting[_]] = Seq(
     version := "1.9-SNAPSHOT",
     organization := "com.arbfranklin.scalatron",
-    
-    scalaVersion := "2.9.2",
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-optimise", "-explaintypes"),
-      
-    libraryDependencies ++= Seq(
-      "org.specs2" %% "specs2" % "1.9" % "test",
-      "org.pegdown" % "pegdown" % "1.0.2" % "test",
-      "junit" % "junit" % "4.7" % "test"),
+
+    scalaVersion := "2.11.8",
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-optimise", "-explaintypes", "-feature"),
+    (scalacOptions in Test) ++= Seq("-Yrangepos"),
+
+    libraryDependencies += "org.specs2" %% "specs2-core" % "3.8.4" % "test",
 
     // default parameters for scalatron play goal
-    scalatronDir := file("/usr/local/scalatron"),
+    scalatronDir := file("/Users/aschroeder/projects/scalatron/dist"),
     headless := false,
     steps := 5000,
     maxSlaves := 650,

@@ -60,7 +60,7 @@ class MapOfWorld private(override val cols: Int, override val cells: Array[Tile]
     require(subview.cols+offset.x <= cols)
     require(subview.cols+offset.y <= cols)
 
-    for (n <- 0 until subview.cells.length) {
+    for (n <- subview.cells.indices) {
       val t = subview.cells(n)
       if (t!=Tile.Occluded) {
         val x = (n % subview.cols) + offset.x
@@ -76,7 +76,7 @@ object MapOfWorld {
   def apply() = new MapOfWorld(1,Array[Tile](Tile.Bot))
 
   def apply(s: String) = {
-    val cols = math.sqrt(s.size).toInt
+    val cols = math.sqrt(s.length).toInt
     val result = s.map(c => Tile(c)).toArray
     new MapOfWorld(cols, result)
   }

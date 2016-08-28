@@ -40,8 +40,7 @@ case class Move(right: Int, down: Int) extends Action {
 
   /** convert the full movement (which is potentially many steps, to a single step) */
   def step: Move = {
-    def clean(n: Int) = if (n > 0) 1 else if (n < 0) -1 else 0
-    new Move(clean(right), clean(down))
+    new Move(right.signum, down.signum)
   }
 }
 

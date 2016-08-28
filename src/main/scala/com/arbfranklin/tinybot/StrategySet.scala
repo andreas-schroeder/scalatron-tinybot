@@ -40,21 +40,21 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
   /**evaluation handler */
   def eval(ctx: ReactContext): List[Action] = {
     // collate all the various actions that we could make
-    val actions = collateActions(ctx)
+    val votes = collateVotes(ctx)
 
     // explosions are the first priority
-    val explosions = actions.filter(_.action.isInstanceOf[Explode])
-    if (!explosions.isEmpty) {
+    val explosions = votes.filter(_.action.isInstanceOf[Explode])
+    if (explosions.nonEmpty) {
       // find the biggest requested explosion
       val biggest = explosions.maxBy(_.action.asInstanceOf[Explode].size)
       return List(biggest.action, Status(biggest.reason))
     }
 
     // collate any state setting
-    val states = actions.filter(_.action.isInstanceOf[SetState]).map(_.asInstanceOf[SetState]).toList
+    val states = votes.collect { case Vote(state : SetState, _, _) => state }.toList
 
     // now spawning, but no matter what we need a move location
-    val fm = findMove(actions)
+    val fm = findMove(votes)
     val move = fm.action.asInstanceOf[Move]
     val reason = fm.reason
 
@@ -62,18 +62,18 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
     val moveInstructions = if (move!=Move.Center) List(move, SetState("lastMove", move.toString)) else List()
 
     // spawn?
-    val spawns = actions.filter(_.action.isInstanceOf[Spawn])
-    if (!spawns.isEmpty && fm.score.isPositive) {
+    val spawns = votes.filter(_.action.isInstanceOf[Spawn])
+    if (spawns.nonEmpty && fm.score.isPositive) {
       // find the biggest spawn
       val biggest = spawns.maxBy(_.action.asInstanceOf[Spawn].energy)
 
-      var spawn = biggest.action.asInstanceOf[Spawn]
+      val spawn = biggest.action.asInstanceOf[Spawn]
       if (spawn.direction != Move.Center) {
         return List(spawn, Status(biggest.reason)) ::: moveInstructions ::: states
       } else {
         // where to spawn?
-        val moves = Move.values.filter(m => ctx.view.at(ctx.view.toXY(m))==Tile.Empty) - move
-        if (!moves.isEmpty) {
+        val moves = Move.values.filter(m => ctx.view.at(ctx.view.toXY(m))==Tile.Empty && m != move)
+        if (moves.nonEmpty) {
           return List(Spawn(randFrom(moves), spawn.energy), Status(biggest.reason)) ::: moveInstructions ::: states
         }
       }
@@ -85,19 +85,16 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
   }
 
   /**collate all the potential actions */
-  private def collateActions(ctx: ReactContext): GenIterable[Vote] = {
+  private def collateVotes(ctx: ReactContext): GenIterable[Vote] = {
     // TODO: apply parallel collections? Slower on my mac, but maybe not on a high-end server?
     val allowedMoves = Move.values.filter(m => ctx.view.at(ctx.view.toXY(m)) != Tile.Wall).toSet
 
     // iterate all the move suggestions the strategies have made
-    strategies.map(t => {
-      val strategy = t._1
-      val w = t._2
-
+    strategies.flatMap { case (strategy, w) =>
       // obtain the candidates and re-weight them
       val votes = strategy.eval(ctx, allowedMoves)
       votes.map(v => Vote(v.action, v.score * w, v.reason))
-    }).flatten
+    }
   }
 
   /**find the best move in the action set */
@@ -106,16 +103,16 @@ class StrategySet private(val strategies: List[(Strategy,Double)]) {
     val moves = actions.map(_.action).filter(_.isInstanceOf[Move]).toSet
 
     // collaborate across the votes for each move square
-    val cscores = moves.map(move => {
+    val cscores = moves.map { move =>
       val votes = actions.filter(_.action == move)
       val score = Score.combine(votes.map(_.score))
-      val dominant = votes.maxBy(v => {
+      val dominant = votes.maxBy { v =>
         if (v.score == Score.Veto) Double.PositiveInfinity else v.score.d
-      }) // veto is dominant
+      } // veto is dominant
 
-      // new colaborated vote
+      // new collaborated vote
       Vote(move, score, dominant.reason)
-    })
+    }
 
     if (cscores.isEmpty) {
       Vote(Move.Center, Score.Abstain, "*stuck*")

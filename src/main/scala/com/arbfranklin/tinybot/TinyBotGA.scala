@@ -47,7 +47,7 @@ class TinyBotGA(var seeds: List[Genome], gsize: Int) extends BotResponder {
   var listeners = List[(Genome, Int) => Unit]()
 
   def addListener(f: (Genome, Int) => Unit) {
-    listeners = (f :: listeners)
+    listeners = f :: listeners
   }
 
   /** called to denote game start */
@@ -94,7 +94,7 @@ class TinyBotGA(var seeds: List[Genome], gsize: Int) extends BotResponder {
       })
 
       // print stats for the round
-      val dist = ascores.map(_._2).toList.sortWith(_ < _)
+      val dist = ascores.values.toList.sortWith(_ < _)
       println("> samples: " + dist.mkString(", "))
       println()
 
@@ -138,19 +138,19 @@ object TinyBotGA {
 
   /** seed a list of genomes */
   def seed(s: Map[Genome, Int], count: Int, mcount: Int): List[Genome] = {
-    var genomes = clone(best(s), count)
+    val genomes = clone(best(s), count)
 
     // expand the sample set
-    genomes.map(g => {
+    genomes.flatMap(g => {
       val mutated = g.mutate(mcount)
       for (i <- 0 until testPerGenome) yield mutated
-    }).flatten
+    })
   }
 
   def clone(l: List[Genome], sz: Int) = {
     var genomes = l
     while (genomes.size < sz) {
-      genomes = (genomes ++ genomes)
+      genomes = genomes ++ genomes
     }
     genomes.take(sz)
   }
@@ -159,12 +159,12 @@ object TinyBotGA {
   def best(s: Map[Genome, Int]): List[Genome] = {
     val genomes = s.toList.sortWith((e1, e2) => {
       e1._2 > e2._2
-    }).map(_._1).toList
+    }).map(_._1)
 
     if (s.size == 1) {
       genomes.take(1)
     } else if (s.size <= 3) {
-      List(genomes(0).mate(genomes(1)))
+      List(genomes.head.mate(genomes(1)))
     } else {
       // the top half genomes
       val topPerformers = genomes.take(genomes.size / 2)
@@ -194,7 +194,7 @@ object TinyBotGA {
     output.write("@DATA\n")
 
     (g: Genome, e: Int) => {
-      output.write(g.keys.map(g.get(_)).mkString(",") + "," + e + "\n")
+      output.write(g.keys.map(g.get).mkString(",") + "," + e + "\n")
       output.flush()
     }
   }

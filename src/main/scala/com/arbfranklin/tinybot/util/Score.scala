@@ -56,8 +56,8 @@ object Score {
   val Low = new Score(0.1)
 
   def combine(scores: GenIterable[Score]): Score = {
-    if (scores.isEmpty || !scores.filter(_.d <= (-1)).isEmpty) return Veto
-    if (!scores.filter(_.d >= 1).isEmpty) return Mandate
+    if (scores.isEmpty || scores.exists(_.d <= (-1))) return Veto
+    if (scores.exists(_.d >= 1)) return Mandate
 
     // average the scores
     val sum = scores.foldLeft(0d) {

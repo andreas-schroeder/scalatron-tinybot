@@ -30,7 +30,9 @@ case class Vote(action: Action, score: Score, reason: String) {
 }
 
 object Vote {
+  import scala.language.implicitConversions
+
   val Abstain = List[Vote]()
 
-  implicit def vote2list(v: Vote) = List[Vote](v)
+  implicit def vote2list(v: Vote): List[Vote] = List(v)
 }

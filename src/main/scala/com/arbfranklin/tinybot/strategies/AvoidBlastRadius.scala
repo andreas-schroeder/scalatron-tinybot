@@ -36,7 +36,7 @@ class AvoidBlastRadius(radius: Int) extends Strategy {
   override def eval(ctx: ReactContext, moves: Set[Move]) = {
     val enemies = ctx.view.find(Tile.OtherMiniBot)
 
-    if (!enemies.isEmpty) {
+    if (enemies.nonEmpty) {
       val badMoves = moves.filter(m => minDist(ctx.view.center + m, enemies) <= radius)
       Vote(Move.Center, Score.High, name) :: badMoves.map(m => Vote(m, -Score.High, name)).toList
     } else {

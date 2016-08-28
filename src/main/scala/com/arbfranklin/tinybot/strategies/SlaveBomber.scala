@@ -37,7 +37,7 @@ class SlaveBomber(radius: Int) extends Strategy {
     val enemies = ctx.view.find(Set(Tile.OtherMiniBot, Tile.OtherBot))
     val closeEnemies = enemies.filter(xy => ctx.view.center.distTo(xy) <= radius)
 
-    if (!closeEnemies.isEmpty) {
+    if (closeEnemies.nonEmpty) {
       Vote(Explode(radius+1), Score.High, name)
     } else {
       Vote.Abstain

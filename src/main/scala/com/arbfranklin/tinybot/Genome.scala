@@ -160,7 +160,7 @@ class Genome private(props: mutable.Map[String, Double]) {
 
     val arr = props.toArray
     for (i <- 0 until n; if arr.length > 0) {
-      val idx = rand.nextInt(arr.size)
+      val idx = rand.nextInt(arr.length)
       val (k, v) = arr(idx)
       val nv = math.min(math.max(v + (rand.nextDouble() - 0.5) * 0.1, 0), 1)
       arr(idx) = (k, nv)

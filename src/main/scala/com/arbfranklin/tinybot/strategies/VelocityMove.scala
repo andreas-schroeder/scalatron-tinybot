@@ -40,7 +40,7 @@ class VelocityMove extends Strategy {
   override def name = "velocity"
 
   /** all available directions */
-  val directions = Move.values - Move.Center
+  val directions = Move.values.filterNot(_==Move.Center)
 
   /**evaluate against the given contect and provide a serious of potential actions and their associated score */
   override def eval(ctx: ReactContext, moves: Set[Move]) = {
@@ -67,14 +67,12 @@ class VelocityMove extends Strategy {
   def velocity(ctx: ReactContext): Move = {
     ctx.lastMove match {
       case Some(m) => m
-      case None => {
-        if (ctx.isInstanceOf[SlaveContext]) {
+      case None => ctx match {
+        case sctx: SlaveContext =>
           // initial velocity away from master
-          val sctx = ctx.asInstanceOf[SlaveContext]
           sctx.masterMove.step.negate
-        } else {
+        case _ =>
           directions(rand.nextInt(directions.length))
-        }
       }
     }
   }

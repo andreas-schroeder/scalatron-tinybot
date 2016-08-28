@@ -95,7 +95,7 @@ class View(val cols: Int, val cells: Array[Tile]) {
 
   override def toString = {
     val s = new collection.mutable.StringBuilder()
-    for (i <- 0 until cells.length) {
+    for (i <- cells.indices) {
       if (i % cols == 0) s.append('\n')
       s.append(Tile.toChar(cells(i)))
     }
@@ -104,10 +104,10 @@ class View(val cols: Int, val cells: Array[Tile]) {
 }
 
 object View {
-  val AroundMoves = Move.values - Move.Center
+  val AroundMoves = Move.values.filterNot(_==Move.Center)
 
   def apply(s: String): View = {
-    val cols = math.sqrt(s.size).toInt
+    val cols = math.sqrt(s.length).toInt
     val tiles = new Array[Tile](s.length)
     for (i <- 0 until s.length) {
       tiles(i) = Tile(s(i))

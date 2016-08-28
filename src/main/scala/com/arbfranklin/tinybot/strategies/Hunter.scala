@@ -54,7 +54,7 @@ class Hunter(tile: Tile) extends Strategy {
   /** find the target to hunt for */
   def findTarget(view: View): Option[XY] = {
     val prey = view.find(tile)
-    if (!prey.isEmpty) Some(prey.minBy(z => view.center.distTo(z))) else None
+    if (prey.nonEmpty) Some(prey.minBy(z => view.center.distTo(z))) else None
   }
 
   /**score a particular action */

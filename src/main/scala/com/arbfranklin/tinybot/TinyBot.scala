@@ -25,6 +25,8 @@
 
 package com.arbfranklin.tinybot
 
+import scala.language.reflectiveCalls
+
 import strategies._
 import util._
 import util.Tile._
@@ -91,11 +93,9 @@ class TinyBot(val g: Genome) extends BotResponder {
     val actions = slaveStrategies.eval(ctx)
 
     // remove status updates that are too noisy
-    actions.map(a => {
-      if (a.isInstanceOf[Status]) {
-        val msg = a.asInstanceOf[Status].text
-        if (msg.length<=3) a else Status("")
-      } else a
-    })
+    actions.map {
+      case a @ Status(msg) => if (msg.length<=3) a else Status("")
+      case a => a
+    }
   }
 }

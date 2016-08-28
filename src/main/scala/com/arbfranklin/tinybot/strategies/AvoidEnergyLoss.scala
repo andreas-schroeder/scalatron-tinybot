@@ -48,7 +48,7 @@ class AvoidEnergyLoss extends Strategy {
       Score.Veto
     } else {
       // add the score of all snorgs that can bite this square
-      val snorgCount = ctx.view.around(xy).filter(x => x == Snorg || x == OtherBot).size
+      val snorgCount = ctx.view.around(xy).count(x => x == Snorg || x == OtherBot)
       snorgCount match {
         case 0 => score
         case 1 => score min tileScore(Snorg) // TODO: Not just snorgs

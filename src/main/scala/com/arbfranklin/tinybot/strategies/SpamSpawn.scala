@@ -37,7 +37,7 @@ class SpamSpawn(keepEnergy: Int, maxEnergy: Int, maxBots: Int) extends Strategy 
 
   /**evaluate against the given context and provide a serious of potential actions and their associated score */
   override def eval(ctx: ReactContext, moves: Set[Move]) = {
-    val energy = (ctx.energy - keepEnergy)
+    val energy = ctx.energy - keepEnergy
     if (canSpawn(ctx) && energy>=MinSpawnEnergy) {
       Vote(Spawn(Move.Center, energy min maxEnergy), Score.High, name)
     } else {
@@ -48,5 +48,5 @@ class SpamSpawn(keepEnergy: Int, maxEnergy: Int, maxBots: Int) extends Strategy 
   def canSpawn(ctx: ReactContext) = (ctx.botCount>=maxBots || ctx.tillApocalypse>MinTurnsRemaining) && emptySurroundings(ctx)
 
   /** we prefer a low density spawn to encourage expansion */
-  def emptySurroundings(ctx: ReactContext) = ctx.view.around(ctx.view.center).filter(_==Tile.MiniBot).isEmpty
+  def emptySurroundings(ctx: ReactContext) = !ctx.view.around(ctx.view.center).contains(Tile.MiniBot)
 }

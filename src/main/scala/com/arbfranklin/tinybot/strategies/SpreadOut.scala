@@ -34,17 +34,10 @@ class SpreadOut extends Strategy {
   override def name = "spread"
 
   /**evaluate against the given context and provide a serious of potential actions and their associated score */
-  override def eval(ctx: ReactContext, moves: Set[Move]) = {
-    if (ctx.isInstanceOf[SlaveContext]) {
-      val sctx = ctx.asInstanceOf[SlaveContext]
+  override def eval(ctx: ReactContext, moves: Set[Move]) = ctx match {
+    case sctx : SlaveContext =>
       val move = sctx.masterMove.step.negate
-      if (moves.contains(move)) {
-        Vote(move, Score.High, name)
-      } else {
-        Vote.Abstain
-      }
-    } else {
-      Vote.Abstain
-    }
+      if (moves.contains(move)) Vote(move, Score.High, name) else Vote.Abstain
+    case _ => Vote.Abstain
   }
 }

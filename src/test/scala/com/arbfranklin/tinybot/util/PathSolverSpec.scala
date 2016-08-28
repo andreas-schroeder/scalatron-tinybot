@@ -26,7 +26,6 @@
 package com.arbfranklin.tinybot.util
 
 import org.specs2.mutable._
-import org.specs2.matcher.{ContainMatcher, ContainAnyOfMatcher}
 
 /**
  * The pathfinder should be able to find the best path for anything within the view bounds.. outside of that it gives up.
@@ -44,17 +43,17 @@ class PathSolverSpec extends Specification {
     """.stripMargin)
 
     "be solved along diagonals" in {
-      solve(view, Move(-2,-2))  must beIn(Move(-1,-1))
-      solve(view, Move(2,2))    must beIn(Move(1,1))
-      solve(view, Move(-2,2))   must beIn(Move(-1,1))
-      solve(view, Move(2,-2))   must beIn(Move(1,-1))
+      solve(view, Move(-2,-2))  must beEqualTo(Seq(Move(-1,-1)))
+      solve(view, Move(2,2))    must beEqualTo(Seq(Move(1,1)))
+      solve(view, Move(-2,2))   must beEqualTo(Seq(Move(-1,1)))
+      solve(view, Move(2,-2))   must beEqualTo(Seq(Move(1,-1)))
     }
 
     "be solved along orthogonals" in {
-      solve(view, Move(0,2))  must beIn(Move(0,1), Move(1,1), Move(-1,1))
-      solve(view, Move(0,-2)) must beIn(Move(0,-1), Move(-1,-1), Move(1,-1))
-      solve(view, Move(-2,0)) must beIn(Move(-1,0), Move(-1,-1), Move(-1,1))
-      solve(view, Move(2,0))  must beIn(Move(1,0), Move(1,-1), Move(1,1))
+      solve(view, Move(0,2))  must contain(exactly(Move(0,1), Move(1,1), Move(-1,1)))
+      solve(view, Move(0,-2)) must contain(exactly(Move(0,-1), Move(-1,-1), Move(1,-1)))
+      solve(view, Move(-2,0)) must contain(exactly(Move(-1,0), Move(-1,-1), Move(-1,1)))
+      solve(view, Move(2,0))  must contain(exactly(Move(1,0), Move(1,-1), Move(1,1)))
     }
 
     "be unsolved past extents" in {
@@ -97,9 +96,9 @@ class PathSolverSpec extends Specification {
         |_________
       """.stripMargin)
 
-      solve(view, Move(4,0)) must beIn(Move(0,-1), Move(-1,-1))
-      solve(view, Move(4,-4)) must beIn(Move(0,-1), Move(-1,-1))
-      solve(view, Move(4,4)) must beIn(Move(-1,0), Move(-1,1))
+      solve(view, Move(4,0)) must contain(exactly(Move(0,-1), Move(-1,-1)))
+      solve(view, Move(4,-4)) must contain(exactly(Move(0,-1), Move(-1,-1)))
+      solve(view, Move(4,4)) must contain(exactly(Move(-1,0), Move(-1,1)))
     }
 
     "be solved with no occlusion" in {
@@ -116,8 +115,8 @@ class PathSolverSpec extends Specification {
       """.stripMargin)
 
       solve(view, Move(4,0)) must beEmpty
-      solve(view, Move(4,-4)) must beIn(Move(0,-1), Move(-1,-1))
-      solve(view, Move(4,4)) must beIn(Move(-1,0), Move(-1,1))
+      solve(view, Move(4,-4)) must contain(exactly(Move(0,-1), Move(-1,-1)))
+      solve(view, Move(4,4)) must contain(exactly(Move(-1,0), Move(-1,1)))
     }
 
   }
@@ -125,8 +124,4 @@ class PathSolverSpec extends Specification {
   /** helpers */
   def solve(view: View, move: Move) = PathSolver(view, view.center, view.center + move).solve()
   def toView(s: String) = View(s.replaceAll("\\s*",""))
-
-  def beIn(vals: Move*) = {
-    new ContainMatcher(vals.seq).only
-  }
 }

@@ -48,7 +48,7 @@ class AStarSearch(view: View, start: XY, goal: XY) extends PathSolver {
     val gScore = mutable.OpenHashMap[XY, Int](start -> 0)
     val fScore = mutable.OpenHashMap[XY, Int](start -> (gScore(start) + start.distTo(goal)))
 
-    while (!openSet.isEmpty) {
+    while (openSet.nonEmpty) {
       // the node in openset having the lowest f_score[] value
       val current = openSet.minBy(x => fScore(x))
       if (current == goal) {
@@ -59,7 +59,7 @@ class AStarSearch(view: View, start: XY, goal: XY) extends PathSolver {
           // permute the options for step 2
           val p1 = path(0)
           val p2 = path(2)
-          val opts = (neighbours(view,p1) intersect neighbours(view,p2))
+          val opts = neighbours(view,p1) intersect neighbours(view,p2)
           return opts.map(o => o - p1).toSet
         }
       }
@@ -85,10 +85,10 @@ class AStarSearch(view: View, start: XY, goal: XY) extends PathSolver {
   }
 
   /**val move set */
-  val moves = Move.values - Move.Center
+  val moves = Move.values.filterNot(_==Move.Center)
 
   /**bad tile def */
-  def isBad(t: Tile.Tile) = (t == Tile.Wall || t == Tile.Toxifera)
+  def isBad(t: Tile.Tile) = t == Tile.Wall || t == Tile.Toxifera
 
   /** find the neighbouring squares of xy */
   def neighbours(view: View, xy: XY) = {
@@ -122,5 +122,5 @@ class DirectPathSolver(view: View, start: XY, goal: XY) extends PathSolver {
   }
 
   /**bad tile def */
-  def isBad(t: Tile.Tile) = (t == Tile.Wall || t == Tile.Toxifera)
+  def isBad(t: Tile.Tile) = t == Tile.Wall || t == Tile.Toxifera
 }
